@@ -264,3 +264,11 @@ tr:last-child td{border-bottom:0}
 .setup ol{padding-left:20px;margin:8px 0}
 
 .count .day{border:0;background:none;min-height:0;padding:0;box-shadow:none}
+
+.cardwrap{display:grid;gap:6px;align-content:start;min-width:0}
+.cardwrap.off .cv{opacity:.45;filter:grayscale(.6)}
+.cardwrap.off .card .t{color:var(--muted)}
+.feedtog{justify-self:start;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--muted)}
+.feedtog[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.feedtog:hover{border-color:var(--accent)}
+.feedtog.big{padding:7px 12px;font-size:14px;border-radius:8px}
