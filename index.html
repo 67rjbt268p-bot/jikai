@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jikai</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F3F4F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1118" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jikai">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@600;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="style.css?v=1">
+<style>html{padding-top:0}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top" id="top" hidden><div class="top-in">
+  <a class="brand" href="#feed" aria-label="Jikai home"><b>次回</b><span>Jikai</span></a>
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button class="tab" data-tab="feed"><i>新</i>Feed</button>
+    <button class="tab" data-tab="calendar"><i>暦</i>Calendar</button>
+    <button class="tab" data-tab="library"><i>棚</i>Library</button>
+    <button class="tab" data-tab="friends"><i>友</i>Friends</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="me btn ghost" id="me" data-act="who" title="Switch person"></button>
+  <button class="ask" id="askBtn" data-act="chat"><span class="dot">C</span>Ask Claude</button>
+</div></header>
+<main class="wrap" id="main"><div class="loading"><span class="k">次回</span>Loading…</div></main>
+<div id="layer"></div>
+<div id="toastHost"></div>
+<script src="app.js?v=1"></script>
+</body>
+</html>
