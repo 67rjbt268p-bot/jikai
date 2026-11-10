@@ -130,6 +130,7 @@ const nameOf=pid=>(S.people[pid]&&S.people[pid].name)||"Someone";
 const colorOf=pid=>(S.people[pid]&&S.people[pid].color)||"var(--sunk)";
 function isNew(t){const p=proj(t);const at=myAt(t.id);return (isFav(t.id)||at>0)&&p.latest>at&&t.format!=="MOVIE"}
 function scoreColor(v){if(v==null)return "";const h=Math.round((v-1)/9*120);return `background:hsl(${h} 55% 50% / .18)`}
+const feedBtn=(t,big)=>`<button class="feedtog ${big?"big":""}" data-act="feedtog" data-id="${esc(t.id)}" aria-pressed="${!t.hidden}" title="${t.hidden?"Show it in the feed and calendar":"Hide it from the feed and calendar"}">${t.hidden?"＋ Add to feed":"✓ In feed"}</button>`;
 const onBoard=aid=>Object.values(S.titles).find(t=>t.anilist===aid);
 
 /* ---------- render helpers ---------- */
@@ -160,7 +161,7 @@ function whoView(){const ps=Object.keys(S.people);
   <form class="newperson" id="newPerson"><input id="np_name" placeholder="New here? Type your name" maxlength="40" aria-label="Your name"><button class="btn primary" type="submit">Join</button></form></div></div>`}
 
 function feedView(){
-  const td=today();const all=list();
+  const td=today();const all=list().filter(t=>!t.hidden);
   const ups=all.map(t=>({t,p:proj(t)})).filter(x=>x.p.next);
   ups.sort((a,b)=>(isFav(b.t.id)-isFav(a.t.id))||a.p.next.date.localeCompare(b.p.next.date));
   const favUps=ups.filter(x=>isFav(x.t.id)).sort((a,b)=>a.p.next.date.localeCompare(b.p.next.date));
@@ -185,7 +186,7 @@ function row(t,what,date,est){
   return `<button class="row" data-open="${esc(t.id)}">${cover(t)}<div style="min-width:0"><div class="t">${esc(t.name)}</div><div class="m">${kindChip(t)} <span>${what}</span></div></div><div class="when">${date?`<b>${esc(fmt(date))}</b><span>${esc(rel(date))}${est?" · est.":""}</span>`:`<b>${t.window?esc(t.window):"TBA"}</b><span>${t.status==="hiatus"?"On hiatus":"Not dated"}</span>`}</div></button>`}
 function calView(){
   const td=today();const end=addDays(td,13);const ev={};
-  list().forEach(t=>occurrences(t,td,end).forEach(o=>{(ev[o.date]=ev[o.date]||[]).push({t,o})}));
+  list().filter(t=>!t.hidden).forEach(t=>occurrences(t,td,end).forEach(o=>{(ev[o.date]=ev[o.date]||[]).push({t,o})}));
   let h=`<section class="sec"><div class="sec-h"><span class="k">暦</span><h2>Next 14 days</h2><span class="sub">Danish dates · est. means estimated</span></div><div class="cal">`;
   for(let i=0;i<14;i++){const d=addDays(td,i);const items=(ev[d]||[]).sort((a,b)=>isFav(b.t.id)-isFav(a.t.id));const wd=dow(d);
     h+=`<div class="day ${d===td?"today":""} ${wd===0||wd===6?"weekend":""} ${items.length?"":"none"}"><h3><span>${esc(fmt(d))}</span><span class="kj">${KANJI[wd]}</span></h3>${items.length?items.map(({t,o})=>`<button class="ev ${isFav(t.id)?"fav":""}" data-open="${esc(t.id)}"><span class="bar" style="background:${esc(t.color||"var(--accent)")}"></span><span style="min-width:0">${esc(t.name)}<span class="n">${esc(unit(t))} ${o.n}${o.est?" · est.":""}</span></span></button>`).join(""):`<div class="empty-day">—</div>`}</div>`}
@@ -199,9 +200,9 @@ function aniResults(res,busy,q){
     return `<div class="res">${cover(fake)}<div style="min-width:0"><div class="t">${esc(fake.name)}</div><div class="m">${esc(kindLabel(fake))}${m.format&&m.format!=="MANGA"&&m.format!=="TV"?" · "+esc(m.format.replace("_"," ")):""}${yr?" · "+yr:""}${tot?" · "+tot:""} · ${esc({RELEASING:"Releasing",FINISHED:"Finished",NOT_YET_RELEASED:"Upcoming",HIATUS:"Hiatus",CANCELLED:"Cancelled"}[m.status]||"")}</div></div>${ex?`<button class="btn ghost" data-open="${esc(ex.id)}">On board</button>`:`<button class="btn primary" data-act="addani" data-aid="${m.id}">＋ Add</button>`}</div>`}).join("")}</div>`}
 function libView(){
   const q=S.q.trim().toLowerCase();
-  const F={all:()=>true,fav:t=>isFav(t.id),anime:t=>t.kind==="anime",read:t=>t.kind!=="anime",airing:t=>t.status==="airing",upcoming:t=>t.status==="upcoming",hiatus:t=>t.status==="hiatus",finished:t=>t.status==="finished"};
+  const F={all:()=>true,feed:t=>!t.hidden,off:t=>!!t.hidden,fav:t=>isFav(t.id),anime:t=>t.kind==="anime",read:t=>t.kind!=="anime",airing:t=>t.status==="airing",upcoming:t=>t.status==="upcoming",hiatus:t=>t.status==="hiatus",finished:t=>t.status==="finished"};
   const items=list().filter(F[S.filter]||F.all).filter(t=>!q||(t.name+" "+(t.series||"")).toLowerCase().includes(q));
-  const chips=[["all","All"],["fav","推 Favorites"],["anime","Anime"],["read","Manga & novels"],["airing","Airing"],["upcoming","Upcoming"],["hiatus","Hiatus"],["finished","Finished"]];
+  const chips=[["all","All"],["feed","In feed"],["off","Not in feed"],["fav","推 Favorites"],["anime","Anime"],["read","Manga & novels"],["airing","Airing"],["upcoming","Upcoming"],["hiatus","Hiatus"],["finished","Finished"]];
   let h=`<div class="tools"><label class="search"><span class="muted" aria-hidden="true">⌕</span><input id="q" type="search" placeholder="Search your board and all of AniList" value="${esc(S.q)}" aria-label="Search titles" autocomplete="off"></label><button class="btn primary" data-act="add">＋ Add title</button></div>
   <div class="filters" style="margin-top:10px">${chips.map(([k,l])=>`<button class="fchip" data-filter="${k}" aria-pressed="${S.filter===k}">${esc(l)}</button>`).join("")}</div>`;
   if(q.length>=2)h+=`<section class="ani-sec"><div class="sec-h"><span class="k">探</span><h2>From AniList</h2><span class="sub">Every anime and manga, whether it's on your board or not</span></div>${aniResults(S.libAni.res,S.libAni.busy,S.libAni.q)}</section>`;
@@ -210,7 +211,7 @@ function libView(){
   const groups={};items.forEach(t=>{(groups[t.series||t.name]=groups[t.series||t.name]||[]).push(t)});
   Object.keys(groups).sort().forEach(g=>{const ts=groups[g];
     h+=`<h2 class="series-h">${esc(g)} <small>${ts.length} ${ts.length===1?"title":"titles"}</small></h2><div class="grid">${ts.map(t=>{const p=proj(t);const at=myAt(t.id);const pct=p.latest?Math.min(100,at/p.latest*100):0;
-      return `<button class="card" data-open="${esc(t.id)}">${cover(t)}<div class="t">${esc(t.name)}</div><div class="m">${kindChip(t)} ${p.next?`${esc(unit(t))} ${p.next.n} · ${esc(fmt(p.next.date))}`:esc(t.status==="finished"?(p.latest?p.latest+" "+unitWord(t)+"s":"Finished"):(t.window||"TBA"))}</div>${at?`<div class="pbar" title="You're at ${at} of ${p.latest}"><i style="width:${pct}%"></i></div>`:""}</button>`}).join("")}</div>`});
+      return `<div class="cardwrap ${t.hidden?"off":""}"><button class="card" data-open="${esc(t.id)}">${cover(t)}<div class="t">${esc(t.name)}</div><div class="m">${kindChip(t)} ${p.next?`${esc(unit(t))} ${p.next.n} · ${esc(fmt(p.next.date))}`:esc(t.status==="finished"?(p.latest?p.latest+" "+unitWord(t)+"s":"Finished"):(t.window||"TBA"))}</div>${at?`<div class="pbar" title="You're at ${at} of ${p.latest}"><i style="width:${pct}%"></i></div>`:""}</button>${feedBtn(t)}</div>`}).join("")}</div>`});
   return h;
 }
 function friendsView(){
@@ -269,7 +270,7 @@ function detailHtml(t){
   ${t.cadence?`<dt>Schedule</dt><dd>${t.cadence==="weekly"?"Weekly":"Monthly"}${t.breaks&&t.breaks.filter(b=>b>=today()).length?` · breaks ${t.breaks.filter(b=>b>=today()).map(fmt).join(", ")}`:""}</dd>`:""}
   ${t.note?`<dt>Note</dt><dd>${esc(t.note)}</dd>`:""}
   ${t.anilist?`<dt>AniList</dt><dd><a href="https://anilist.co/${t.kind==="anime"?"anime":"manga"}/${t.anilist}" target="_blank" rel="noopener" style="color:var(--accent)">Open page</a></dd>`:""}</dl></div></div>`;
-  h+=`<div class="block"><button class="favbtn" data-act="fav" data-id="${esc(t.id)}" aria-pressed="${fav}"><span class="s">推</span>${fav?"Favorite":"Add to favorites"}</button></div>`;
+  h+=`<div class="block"><button class="favbtn" data-act="fav" data-id="${esc(t.id)}" aria-pressed="${fav}"><span class="s">推</span>${fav?"Favorite":"Add to favorites"}</button> ${feedBtn(t,true)}</div>`;
   h+=`<div class="block"><h3>Your progress</h3><div class="stepper"><button class="btn" data-act="dec" data-id="${esc(t.id)}" aria-label="One back">−</button><input id="atInput" type="number" min="0" value="${at}" aria-label="${esc(unitWord(t))} you are at"><button class="btn" data-act="inc" data-id="${esc(t.id)}" aria-label="One forward">＋</button><span class="muted">${at?`You're at ${esc(unit(t))} ${at}`:"Not started"}${p.latest?` · ${Math.max(0,p.latest-at)} to catch up`:""}</span></div>`;
   const maxN=Math.max(p.latest,at,t.format==="MOVIE"?1:0);
   if(maxN>0){const per=60;const pages=Math.ceil(maxN/per);const pg=Math.min(S.epPage,pages-1);const hi=maxN-pg*per;const lo=Math.max(1,hi-per+1);
@@ -353,6 +354,7 @@ document.addEventListener("click",async e=>{
   if(act==="inc"){await setAt(id,myAt(id)+1);if(e.target.closest(".newcard"))toast(`Marked ${unit(S.titles[id])} ${myAt(id)} as seen`);return}
   if(act==="dec"){setAt(id,myAt(id)-1);return}
   if(act==="fav"){setFav(id,!isFav(id));return}
+  if(act==="feedtog"){const t=S.titles[id];if(!t)return;t.hidden=!t.hidden;render();if(await putTitle(t))toast(t.hidden?`${t.name} removed from the feed`:`${t.name} added to the feed`);return}
   if(act==="sel"){const n=Number(a.dataset.n);S.sel=S.sel===n?null:n;render();return}
   if(act==="rate"){rate(S.open,Number(a.dataset.n),Number(a.dataset.v));return}
   if(act==="seenTo"){setAt(S.open,Number(a.dataset.n));return}
@@ -395,7 +397,7 @@ function renderMsgs(){const m=$("#msgs");if(!m)return;
   m.innerHTML=S.chat.length?S.chat.map(x=>`<div class="msg ${x.role==="user"?"u":x.role==="tool"?"tool":"a"}">${x.html||esc(x.content)}</div>`).join(""):`<div class="msg a">Hi ${esc(nameOf(S.me))}! I can see the whole board and search AniList. Ask me to add titles, change release dates, log what you've watched, rate an episode or change the look.</div>`;
   m.scrollTop=m.scrollHeight;const s=$("#sugg");if(s)s.hidden=S.chat.length>0;
   const b=$("#chatSend");if(b){b.textContent=S.chatBusy?"Stop":"Send";b.type=S.chatBusy?"button":"submit";if(S.chatBusy)b.dataset.act="stop";else delete b.dataset.act}}
-function boardSummary(){return list().map(t=>{const p=proj(t);return `${t.id} | ${t.name} | ${t.kind}${t.format==="MOVIE"?" movie":""} | ${t.status} | latest ${p.latest}${t.total?"/"+t.total:""} | next ${p.next?unit(t)+" "+p.next.n+" "+p.next.date+(p.next.est?" (est)":""):(t.window||"none")} | cadence ${t.cadence||"-"} | my progress ${myAt(t.id)}${isFav(t.id)?" | FAVORITE":""}`}).join("\n")}
+function boardSummary(){return list().map(t=>{const p=proj(t);return `${t.id} | ${t.name} | ${t.kind}${t.format==="MOVIE"?" movie":""} | ${t.status} | latest ${p.latest}${t.total?"/"+t.total:""} | next ${p.next?unit(t)+" "+p.next.n+" "+p.next.date+(p.next.est?" (est)":""):(t.window||"none")} | cadence ${t.cadence||"-"} | my progress ${myAt(t.id)}${isFav(t.id)?" | FAVORITE":""}${t.hidden?" | HIDDEN FROM FEED":""}`}).join("\n")}
 const TOOLS=[
  {name:"search_anilist",description:"Search AniList for any anime, manga, manhwa, manhua or light novel, including ones not on the board. Returns ids to use with add_from_anilist.",input_schema:{type:"object",properties:{query:{type:"string"},type:{type:"string",enum:["ANIME","MANGA","BOTH"]}},required:["query"]},
   run:async i=>{const r=await aniSearch(String(i.query),i.type||"BOTH");S.ani.res=r;return r.slice(0,10).map(m=>({anilistId:m.id,title:aniName(m),type:m.type,format:aniFormat(m),status:m.status,year:(m.startDate&&m.startDate.year)||null,episodes:m.episodes,chapters:m.chapters,nextEpisode:m.nextAiringEpisode?{n:m.nextAiringEpisode.episode,date:cphDate(m.nextAiringEpisode.airingAt*1000)}:null,onBoard:!!onBoard(m.id)}))}},
@@ -407,6 +409,7 @@ const TOOLS=[
   run:async i=>{const id=await addTitle(i);return {ok:!!id,id}}},
  {name:"remove_title",description:"Remove a title for everyone. Only after the user clearly confirmed removing that title.",input_schema:{type:"object",properties:{id:{type:"string"}},required:["id"]},run:async i=>({ok:await removeTitle(i.id)})},
  {name:"set_progress",description:"Set the last episode/chapter the current user has seen.",input_schema:{type:"object",properties:{id:{type:"string"},number:{type:"number"}},required:["id","number"]},run:async i=>({ok:await setAt(i.id,i.number)})},
+ {name:"set_in_feed",description:"Show or hide a title in the shared feed and calendar (it stays in the library).",input_schema:{type:"object",properties:{id:{type:"string"},on:{type:"boolean"}},required:["id","on"]},run:async i=>{const t=S.titles[i.id];if(!t)return {ok:false};t.hidden=!i.on;render();return {ok:await putTitle(t)}}},
  {name:"set_favorite",description:"Pin or unpin a title as the current user's favorite.",input_schema:{type:"object",properties:{id:{type:"string"},on:{type:"boolean"}},required:["id","on"]},run:async i=>({ok:await setFav(i.id,i.on)})},
  {name:"rate",description:"Current user's score 1-10 for one episode/chapter; null removes it.",input_schema:{type:"object",properties:{id:{type:"string"},number:{type:"number"},score:{type:["number","null"]}},required:["id","number","score"]},
   run:async i=>{const cur=S.ratings[S.me+"__"+i.id+"__"+i.number];if(i.score!=null&&cur&&cur.score===i.score)return {ok:true};return {ok:await rate(i.id,i.number,i.score)}}},
@@ -414,7 +417,7 @@ const TOOLS=[
  {name:"set_accent",description:"Change the app's accent color for everyone.",input_schema:{type:"object",properties:{accent:{type:"string",enum:Object.keys(ACCENTS)}},required:["accent"]},run:async i=>{S.settings.accent=i.accent;applyAccent();return {ok:await guard(()=>rpc("jk_put_setting",{sk:"accent",sv:i.accent}))}}},
  {name:"log_feature_request",description:"Record a request to change how the app itself works (new screens, layout, features) that these tools can't do.",input_schema:{type:"object",properties:{text:{type:"string"}},required:["text"]},run:async i=>({ok:await guard(()=>rpc("jk_add_request",{txt:String(i.text),pid:S.me}))})}
 ];
-const LABEL={add_from_anilist:"Added",update_title:"Updated",add_title_manually:"Added",remove_title:"Removed",set_progress:"Progress set",set_favorite:"Favorite",rate:"Rated",set_accent:"Accent changed",log_feature_request:"Noted request",search_anilist:"Searched AniList"};
+const LABEL={add_from_anilist:"Added",update_title:"Updated",add_title_manually:"Added",remove_title:"Removed",set_progress:"Progress set",set_favorite:"Favorite",set_in_feed:"Feed updated",rate:"Rated",set_accent:"Accent changed",log_feature_request:"Noted request",search_anilist:"Searched AniList"};
 async function sendChat(text){
   if(S.chatBusy)return;
   S.chat.push({role:"user",content:text});S.chatBusy=true;const live={role:"assistant",content:"Thinking…"};S.chat.push(live);renderMsgs();
