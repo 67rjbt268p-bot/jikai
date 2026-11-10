@@ -262,3 +262,5 @@ tr:last-child td{border-bottom:0}
 .linkbox input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-family:var(--f-mono);font-size:12px}
 .setup{font-size:14px;line-height:1.6}
 .setup ol{padding-left:20px;margin:8px 0}
+
+.count .day{border:0;background:none;min-height:0;padding:0;box-shadow:none}
